@@ -2,16 +2,7 @@
   <div class="sales-chart-card">
     <div class="chart-header">
       <h3 class="chart-title">Ventas de los últimos 7 días</h3>
-      <div class="chart-tabs">
-        <button 
-          v-for="tab in tabs" 
-          :key="tab.value"
-          :class="['tab-button', { active: activeTab === tab.value }]"
-          @click="activeTab = tab.value"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
+
     </div>
     <div class="chart-container">
       <svg class="chart-svg" viewBox="0 0 600 250" preserveAspectRatio="none">
@@ -47,14 +38,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-
-const activeTab = ref('7days');
-const tabs = [
-  { label: '7 días', value: '7days' },
-  { label: '30 días', value: '30days' },
-  { label: '90 días', value: '90days' }
-];
+import { computed } from 'vue';
 
 const data = [7.5, 7.2, 6.8, 7.8, 8.5, 8.2, 7.5];
 const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -112,39 +96,13 @@ const areaPath = computed(() => {
   margin: 0;
 }
 
-.chart-tabs {
-  display: flex;
-  gap: 8px;
-  background: #f5f5f5;
-  padding: 4px;
-  border-radius: 8px;
-}
-
-.tab-button {
-  padding: 6px 16px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab-button.active {
-  background: white;
-  color: #3b82f6;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
 .chart-container {
   position: relative;
 }
 
 .chart-svg {
   width: 100%;
-  height: 250px;
+  height: auto;
 }
 
 .chart-labels {

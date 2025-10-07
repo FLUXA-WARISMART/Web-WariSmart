@@ -3,7 +3,7 @@
     <div class="dashboard-header">
       <div>
         <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Resumen general de tu negocio • Hoy, 28 de septiembre 2024</p>
+        <p class="page-subtitle">Resumen general de tu negocio • Hoy, {{ fechaFormatoHoy }}</p>
       </div>
     </div>
 
@@ -74,13 +74,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import StatCard from '../components/StatCard.vue';
 import SalesChart from '../components/SalesChart.vue';
 import QuickActions from '../components/QuickActions.vue';
 import LowStockProducts from '../components/LowStockProducts.vue';
 import ExpirationAlerts from '../components/ExpirationAlerts.vue';
 import RecentActivity from '../components/RecentActivity.vue';
+import { ref, onMounted } from 'vue'
+
+const fechaFormatoHoy = ref('')
+
+onMounted(() => {
+  const fecha = new Date()
+  fechaFormatoHoy.value = new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(fecha)
+})
 
 // Icons as components
 const salesIcon = {
