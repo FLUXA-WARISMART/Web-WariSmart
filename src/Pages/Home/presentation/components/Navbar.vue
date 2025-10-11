@@ -48,7 +48,7 @@ const menuItems = ref([
   { id: 'inventory', label: 'Inventario', to: '/inventario' },
   { id: 'sales', label: 'Ventas', to: '/ventas' },
   { id: 'suppliers', label: 'Proveedores', to: '/proveedores' },
-  { id: 'reports', label: 'Reportes', to: '#' },
+  { id: 'reports', label: 'Reportes', to: '/reportes' },
   { id: 'users', label: 'Gestión de usuarios', to: '#' },
   { id: 'config', label: 'Configuración', to: '#' }
 ]);
