@@ -89,41 +89,62 @@
       </div>
     </div>
 
-    <!-- Financial Summary -->
-    <div class="financial-card">
-      <h3 class="card-title">Resumen Financiero</h3>
-      <div class="financial-grid">
-        <div class="financial-item">
-          <div class="financial-label">Ingresos</div>
-          <div class="financial-value positive">S/45,230</div>
-          <div class="financial-note">Este mes</div>
+    <!-- Financial and Staff Grid -->
+    <div class="financial-staff-grid">
+      <!-- Financial Summary -->
+      <div class="financial-card">
+        <h3 class="card-title">Resumen Financiero</h3>
+        <div class="financial-grid">
+          <div class="financial-item">
+            <div class="financial-label">Ingresos</div>
+            <div class="financial-value positive">S/45,230</div>
+            <div class="financial-note">Este mes</div>
+          </div>
+          <div class="financial-item">
+            <div class="financial-label">Gastos</div>
+            <div class="financial-value negative">S/12,840</div>
+            <div class="financial-note">Este mes</div>
+          </div>
+          <div class="financial-item">
+            <div class="financial-label">Ganancia</div>
+            <div class="financial-value success">S/32,390</div>
+            <div class="financial-note">Este mes</div>
+          </div>
         </div>
-        <div class="financial-item">
-          <div class="financial-label">Gastos</div>
-          <div class="financial-value negative">S/12,840</div>
-          <div class="financial-note">Este mes</div>
+        <div class="bar-chart">
+          <div v-for="month in ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']" :key="month" class="bar-group">
+            <div class="bar income" :style="{ height: Math.random() * 100 + 50 + 'px' }"></div>
+            <div class="bar expense" :style="{ height: Math.random() * 50 + 20 + 'px' }"></div>
+            <div class="bar-label">{{ month }}</div>
+          </div>
         </div>
-        <div class="financial-item">
-          <div class="financial-label">Ganancia</div>
-          <div class="financial-value success">S/32,390</div>
-          <div class="financial-note">Este mes</div>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #10b981"></span>
+            <span>Ingresos</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #ef4444"></span>
+            <span>Gastos</span>
+          </div>
         </div>
       </div>
-      <div class="bar-chart">
-        <div v-for="month in ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']" :key="month" class="bar-group">
-          <div class="bar income" :style="{ height: Math.random() * 100 + 50 + 'px' }"></div>
-          <div class="bar expense" :style="{ height: Math.random() * 50 + 20 + 'px' }"></div>
-          <div class="bar-label">{{ month }}</div>
-        </div>
-      </div>
-      <div class="chart-legend">
-        <div class="legend-item">
-          <span class="legend-dot" style="background: #10b981"></span>
-          <span>Ingresos</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-dot" style="background: #ef4444"></span>
-          <span>Gastos</span>
+
+      <!-- Staff Performance -->
+      <div class="section-card staff-card">
+        <h3 class="card-title">Desempeño del Personal</h3>
+        <div class="staff-list">
+          <div v-for="staff in staffPerformance" :key="staff.id" class="staff-item">
+            <div class="staff-avatar">{{ staff.initials }}</div>
+            <div class="staff-info">
+              <div class="staff-name">{{ staff.name }}</div>
+              <div class="staff-role">{{ staff.role }}</div>
+            </div>
+            <div class="staff-sales">
+              <div class="sales-amount">{{ staff.sales }}</div>
+              <div class="sales-count">{{ staff.count }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -174,24 +195,6 @@
               <div class="product-units">{{ product.units }} unidades vendidas</div>
             </div>
             <div class="product-revenue">{{ product.revenue }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Staff Performance -->
-    <div class="section-card staff-card">
-      <h3 class="card-title">Desempeño del Personal</h3>
-      <div class="staff-list">
-        <div v-for="staff in staffPerformance" :key="staff.id" class="staff-item">
-          <div class="staff-avatar">{{ staff.initials }}</div>
-          <div class="staff-info">
-            <div class="staff-name">{{ staff.name }}</div>
-            <div class="staff-role">{{ staff.role }}</div>
-          </div>
-          <div class="staff-sales">
-            <div class="sales-amount">{{ staff.sales }}</div>
-            <div class="sales-count">{{ staff.count }}</div>
           </div>
         </div>
       </div>
@@ -496,14 +499,17 @@ const demandPredictions = ref([
   gap: 24px;
 }
 
-.bottom-grid {
+.financial-staff-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-bottom: 24px;
 }
 
-.staff-card {
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
   margin-bottom: 24px;
 }
 
@@ -681,7 +687,8 @@ const demandPredictions = ref([
 
 @media (max-width: 1200px) {
   .content-grid,
-  .bottom-grid {
+  .bottom-grid,
+  .financial-staff-grid {
     grid-template-columns: 1fr;
   }
   
