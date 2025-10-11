@@ -10,44 +10,50 @@
       <button class="more-button">⋯</button>
     </div>
 
-    <div class="search-box">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/>
-        <path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input type="text" placeholder="Buscar cliente..." class="search-input" />
+    <div class="filters-row">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Buscar cliente..." class="search-input" />
+      </div>
+
+      <select class="filter-select">
+        <option>Todos los clientes</option>
+        <option>Clientes frecuentes</option>
+        <option>Nuevos clientes</option>
+      </select>
     </div>
 
-    <select class="filter-select">
-      <option>Todos los clientes</option>
-      <option>Clientes frecuentes</option>
-      <option>Nuevos clientes</option>
-    </select>
-
-    <div class="customers-list">
-      <div v-for="customer in customers" :key="customer.id" class="customer-item">
-        <div class="customer-avatar">{{ customer.initials }}</div>
-        <div class="customer-info">
-          <div class="customer-name">{{ customer.nombre }}</div>
-          <div class="customer-type">{{ customer.tipo }}</div>
+    <div class="customers-grid">
+      <div v-for="customer in customers" :key="customer.id" class="customer-card">
+        <div class="customer-header">
+          <div class="customer-avatar">{{ customer.initials }}</div>
+          <div class="customer-info">
+            <div class="customer-name">{{ customer.nombre }}</div>
+            <div class="customer-type">{{ customer.tipo }}</div>
+          </div>
+          <button class="menu-button">⋮</button>
         </div>
-      </div>
-    </div>
+        
+        <div class="customer-details">
+          <div class="detail-row">
+            <span class="detail-label">Total compras:</span>
+            <span class="detail-value">{{ customer.totalCompras }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Última compra:</span>
+            <span class="detail-value">{{ customer.ultimaCompra }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Productos favoritos:</span>
+            <span class="detail-value">{{ customer.productosFavoritos }}</span>
+          </div>
+        </div>
 
-    <div class="customer-details" v-if="selectedCustomer">
-      <div class="detail-row">
-        <span>Total compras:</span>
-        <strong>{{ selectedCustomer.totalCompras }}</strong>
+        <button class="view-history-link">Ver historial completo</button>
       </div>
-      <div class="detail-row">
-        <span>Última compra:</span>
-        <strong>{{ selectedCustomer.ultimaCompra }}</strong>
-      </div>
-      <div class="detail-row">
-        <span>Productos favoritos:</span>
-        <strong>{{ selectedCustomer.productosFavoritos }}</strong>
-      </div>
-      <button class="view-history-button">Ver historial completo</button>
     </div>
 
     <button class="view-all-button">Ver todos los clientes →</button>
@@ -87,14 +93,13 @@ const customers = ref([
   }
 ]);
 
-const selectedCustomer = ref(customers.value[0]);
 </script>
 
 <style scoped>
 .customer-history-card {
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -109,7 +114,7 @@ const selectedCustomer = ref(customers.value[0]);
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
@@ -130,9 +135,15 @@ const selectedCustomer = ref(customers.value[0]);
   padding: 4px 8px;
 }
 
+.filters-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
 .search-box {
   position: relative;
-  margin-bottom: 12px;
+  flex: 1;
 }
 
 .search-icon {
@@ -159,49 +170,56 @@ const selectedCustomer = ref(customers.value[0]);
 }
 
 .filter-select {
-  width: 100%;
   padding: 10px 12px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
   background: white;
   cursor: pointer;
-  margin-bottom: 16px;
+  min-width: 180px;
 }
 
-.customers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+.customers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
-.customer-item {
+.customer-card {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.customer-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.customer-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.customer-item:hover {
-  background: #f3f4f6;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .customer-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .customer-info {
@@ -209,21 +227,28 @@ const selectedCustomer = ref(customers.value[0]);
 }
 
 .customer-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #1a1a1a;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .customer-type {
-  font-size: 12px;
+  font-size: 13px;
   color: #666;
 }
 
+.menu-button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
 .customer-details {
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
   margin-bottom: 16px;
 }
 
@@ -233,42 +258,47 @@ const selectedCustomer = ref(customers.value[0]);
   align-items: center;
   padding: 8px 0;
   font-size: 14px;
+}
+
+.detail-label {
   color: #666;
 }
 
-.detail-row strong {
+.detail-value {
   color: #1a1a1a;
+  font-weight: 600;
 }
 
-.view-history-button {
+.view-history-link {
   width: 100%;
-  padding: 10px;
-  background: #3b82f6;
-  color: white;
+  padding: 0;
+  background: none;
+  color: #3b82f6;
   border: none;
-  border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 12px;
-  transition: background 0.2s;
+  text-align: left;
+  transition: color 0.2s;
 }
 
-.view-history-button:hover {
-  background: #2563eb;
+.view-history-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 .view-all-button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background: white;
   color: #3b82f6;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  text-align: center;
 }
 
 .view-all-button:hover {
