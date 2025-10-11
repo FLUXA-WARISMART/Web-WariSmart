@@ -79,15 +79,15 @@
             </td>
             <td>{{ product.code }}</td>
             <td>{{ product.category }}</td>
-            <td :class="{ 'text-warning': product.stockActual <= product.stockMin }">
+            <td :class="{ 'text-warning': product.stockActual <= product.stockMinimo, 'text-danger': product.stockActual === 0 }">
               {{ product.stockActual }}
             </td>
-            <td>{{ product.stockMin }}</td>
+            <td>{{ product.stockMinimo }}</td>
             <td>{{ product.ubicacion }}</td>
-            <td>{{ product.precio }}</td>
+            <td>{{ formatPrice(product.precio) }}</td>
             <td>
-              <span :class="['status-badge', product.estado.toLowerCase().replace(' ', '-')]">
-                {{ product.estado }}
+              <span :class="['status-badge', getStockStatus(product.stockActual, product.stockMinimo).toLowerCase().replace(' ', '-')]">
+                {{ getStockStatus(product.stockActual, product.stockMinimo) }}
               </span>
             </td>
             <td>
@@ -114,75 +114,72 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
-const products = ref([
-  {
-    id: 1,
-    name: 'iPhone 14 Pro',
-    brand: 'Apple',
-    code: 'IP-14PRO001',
-    category: 'Electrónicos',
-    stockActual: 45,
-    stockMin: 10,
-    ubicacion: 'Almacén Principal',
-    precio: 'S/999.00',
-    estado: 'En Stock',
-    icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>' }
-  },
-  {
-    id: 2,
-    name: 'MacBook Air M2',
-    brand: 'Apple',
-    code: 'MBA13M2001',
-    category: 'Electrónicos',
-    stockActual: 3,
-    stockMin: 5,
-    ubicacion: 'Tienda 1',
-    precio: 'S/1,299.00',
-    estado: 'Stock Bajo',
-    icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>' }
-  },
-  {
-    id: 3,
-    name: 'Jeans Clásicos',
-    brand: "Levi's",
-    code: 'LV501BLU32',
-    category: 'Ropa',
-    stockActual: 120,
-    stockMin: 20,
-    ubicacion: 'Almacén Principal',
-    precio: 'S/89.99',
-    estado: 'En Stock',
-    icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>' }
-  },
-  {
-    id: 4,
-    name: 'Taza Cerámica Premium',
-    brand: 'HomeStyle',
-    code: 'HS-MUG-001',
-    category: 'Hogar',
-    stockActual: 0,
-    stockMin: 15,
-    ubicacion: 'Tienda 2',
-    precio: 'S/24.99',
-    estado: 'Sin Stock',
-    icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>' }
-  },
-  {
-    id: 5,
-    name: 'AirPods Pro',
-    brand: 'Apple',
-    code: 'APP-PRO-002',
-    category: 'Electrónicos',
-    stockActual: 28,
-    stockMin: 8,
-    ubicacion: 'Almacén Principal',
-    precio: 'S/249.00',
-    estado: 'En Stock',
-    icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' }
+const products = ref([]);
+
+// Función para cargar productos desde LocalStorage
+const loadProducts = () => {
+  try {
+    const storedProducts = localStorage.getItem('productos');
+    if (storedProducts) {
+      products.value = JSON.parse(storedProducts);
+      
+      // Actualizar estadísticas
+      updateStats(products.value);
+    }
+  } catch (error) {
+    console.error('Error al cargar productos desde LocalStorage:', error);
   }
-]);
+};
+
+// Función para actualizar estadísticas
+const updateStats = (productList) => {
+  const totalProducts = productList.length;
+  const lowStock = productList.filter(p => p.stockActual <= p.stockMinimo && p.stockActual > 0).length;
+  const outOfStock = productList.filter(p => p.stockActual === 0).length;
+  const totalValue = productList.reduce((sum, p) => sum + (p.precio * p.stockActual), 0);
+  
+  // Emitir evento para actualizar las estadísticas en el componente padre
+  window.dispatchEvent(new CustomEvent('update-stats', {
+    detail: {
+      totalProducts,
+      lowStock,
+      outOfStock,
+      totalValue: `S/${totalValue.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    }
+  }));
+};
+
+// Escuchar eventos de actualización de productos
+window.addEventListener('product-updated', loadProducts);
+
+// Cargar productos al montar el componente
+onMounted(() => {
+  loadProducts();
+  
+  // Configurar un intervalo para verificar actualizaciones (cada 5 segundos)
+  const intervalId = setInterval(loadProducts, 5000);
+  
+  // Limpiar el intervalo cuando el componente se desmonte
+  return () => clearInterval(intervalId);
+});
+
+// Función para formatear el precio
+const formatPrice = (price) => {
+  return new Intl.NumberFormat('es-PE', {
+    style: 'currency',
+    currency: 'PEN',
+    minimumFractionDigits: 2
+  }).format(price).replace('PEN', 'S/');
+};
+
+// Función para determinar el estado del stock
+const getStockStatus = (stockActual, stockMinimo) => {
+  if (stockActual === 0) return 'Sin Stock';
+  if (stockActual <= stockMinimo) return 'Stock Bajo';
+  return 'En Stock';
+};
 </script>
 
 <style scoped>
@@ -315,6 +312,11 @@ const products = ref([
 
 .text-warning {
   color: #f59e0b;
+  font-weight: 600;
+}
+
+.text-danger {
+  color: #ef4444;
   font-weight: 600;
 }
 

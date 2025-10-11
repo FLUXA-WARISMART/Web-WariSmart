@@ -35,6 +35,12 @@ const routes = [
         path: '/configuracion',
         name: 'Settings',
         component: () => import('../Pages/Settings/presentation/views/SettingsView.vue')
+    },
+    {
+        path: '/localstorage',
+        name: 'LocalStorage',
+        component: () => import('../WebStorage/components/LocalStorage.component.vue'),
+        alias: '/storage'
     }
 ];
 

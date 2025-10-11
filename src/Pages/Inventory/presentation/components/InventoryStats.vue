@@ -15,7 +15,7 @@
     <div class="stat-card">
       <div class="stat-content">
         <div class="stat-label">Stock Bajo</div>
-        <div class="stat-value danger">{{ stats.lowStock }}</div>
+        <div class="stat-value warning">{{ stats.lowStock }}</div>
       </div>
       <div class="stat-icon red">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -26,8 +26,8 @@
 
     <div class="stat-card">
       <div class="stat-content">
-        <div class="stat-label">Por Vencer</div>
-        <div class="stat-value warning">{{ stats.expiring }}</div>
+        <div class="stat-label">Sin Stock</div>
+        <div class="stat-value danger">{{ stats.outOfStock }}</div>
       </div>
       <div class="stat-icon orange">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -53,17 +53,63 @@
 </template>
 
 <script setup>
-const props = defineProps({
-  stats: {
-    type: Object,
-    default: () => ({
-      totalProducts: 1247,
-      lowStock: 23,
-      expiring: 8,
-      totalValue: 'S/89,450'
-    })
-  }
+import { ref, onMounted } from 'vue';
+
+const stats = ref({
+  totalProducts: 0,
+  lowStock: 0,
+  outOfStock: 0,
+  totalValue: 'S/0.00'
 });
+
+// Función para actualizar estadísticas
+const updateStats = (event) => {
+  if (event && event.detail) {
+    stats.value = {
+      totalProducts: event.detail.totalProducts || 0,
+      lowStock: event.detail.lowStock || 0,
+      outOfStock: event.detail.outOfStock || 0,
+      totalValue: event.detail.totalValue || 'S/0.00'
+    };
+  }
+};
+
+// Escuchar eventos de actualización de estadísticas
+onMounted(() => {
+  // Cargar datos iniciales
+  loadInitialStats();
+  
+  // Escuchar eventos de actualización
+  window.addEventListener('update-stats', updateStats);
+  
+  // Limpiar el event listener cuando el componente se desmonte
+  return () => {
+    window.removeEventListener('update-stats', updateStats);
+  };
+});
+
+// Cargar estadísticas iniciales desde LocalStorage
+const loadInitialStats = () => {
+  try {
+    const storedProducts = localStorage.getItem('productos');
+    if (storedProducts) {
+      const products = JSON.parse(storedProducts);
+      const totalProducts = products.length;
+      const lowStock = products.filter(p => p.stockActual <= p.stockMinimo && p.stockActual > 0).length;
+      const outOfStock = products.filter(p => p.stockActual === 0).length;
+      const totalValue = products.reduce((sum, p) => sum + (p.precio * p.stockActual), 0);
+      
+      stats.value = {
+        totalProducts,
+        lowStock,
+        outOfStock,
+        totalValue: `S/${totalValue.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      };
+    }
+  } catch (error) {
+    console.error('Error al cargar estadísticas iniciales:', error);
+  }
+};
 </script>
 
 <style scoped>

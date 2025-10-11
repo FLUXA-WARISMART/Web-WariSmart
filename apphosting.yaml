@@ -1,0 +1,13 @@
+# Firebase App Hosting configuration
+runConfig:
+  # Configuración de tiempo de ejecución
+  concurrency: 100
+  cpu: 1
+  memoryMiB: 512
+  minInstances: 0
+  maxInstances: 4
+
+env:
+  # Variables de entorno (si las necesitas)
+  - variable: NODE_ENV
+    value: production
