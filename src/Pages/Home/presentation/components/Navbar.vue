@@ -5,14 +5,15 @@
     </div>
     
     <div class="navbar-menu">
-      <a 
+      <router-link 
         v-for="item in menuItems" 
         :key="item.id"
-        :href="item.href"
-        :class="['menu-item', { active: item.active }]"
+        :to="item.to"
+        :class="['menu-item']"
+        active-class="active"
       >
         {{ item.label }}
-      </a>
+      </router-link>
     </div>
     
     <div class="navbar-actions">
@@ -43,13 +44,13 @@
 import { ref } from 'vue';
 
 const menuItems = ref([
-  { id: 'dashboard', label: 'Dashboard', href: '#', active: true },
-  { id: 'inventory', label: 'Inventario', href: '#', active: false },
-  { id: 'sales', label: 'Ventas', href: '#', active: false },
-  { id: 'suppliers', label: 'Proveedores', href: '#', active: false },
-  { id: 'reports', label: 'Reportes', href: '#', active: false },
-  { id: 'users', label: 'Gestión de usuarios', href: '#', active: false },
-  { id: 'config', label: 'Configuración', href: '#', active: false }
+  { id: 'dashboard', label: 'Dashboard', to: '/' },
+  { id: 'inventory', label: 'Inventario', to: '/inventario' },
+  { id: 'sales', label: 'Ventas', to: '#' },
+  { id: 'suppliers', label: 'Proveedores', to: '#' },
+  { id: 'reports', label: 'Reportes', to: '#' },
+  { id: 'users', label: 'Gestión de usuarios', to: '#' },
+  { id: 'config', label: 'Configuración', to: '#' }
 ]);
 </script>
 

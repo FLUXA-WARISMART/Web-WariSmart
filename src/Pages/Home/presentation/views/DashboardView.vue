@@ -80,18 +80,18 @@ import QuickActions from '../components/QuickActions.vue';
 import LowStockProducts from '../components/LowStockProducts.vue';
 import ExpirationAlerts from '../components/ExpirationAlerts.vue';
 import RecentActivity from '../components/RecentActivity.vue';
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue';
 
-const fechaFormatoHoy = ref('')
+const fechaFormatoHoy = ref('');
 
 onMounted(() => {
-  const fecha = new Date()
+  const fecha = new Date();
   fechaFormatoHoy.value = new Intl.DateTimeFormat('es-ES', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
-  }).format(fecha)
-})
+  }).format(fecha);
+});
 
 // Icons as components
 const salesIcon = {
