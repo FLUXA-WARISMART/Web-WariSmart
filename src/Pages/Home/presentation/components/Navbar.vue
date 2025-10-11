@@ -46,7 +46,7 @@ import { ref } from 'vue';
 const menuItems = ref([
   { id: 'dashboard', label: 'Dashboard', to: '/' },
   { id: 'inventory', label: 'Inventario', to: '/inventario' },
-  { id: 'sales', label: 'Ventas', to: '#' },
+  { id: 'sales', label: 'Ventas', to: '/ventas' },
   { id: 'suppliers', label: 'Proveedores', to: '#' },
   { id: 'reports', label: 'Reportes', to: '#' },
   { id: 'users', label: 'Gestión de usuarios', to: '#' },
