@@ -2,7 +2,7 @@
   <div class="sales-section">
     <div class="section-header">
       <h3 class="section-title">Registro de Ventas</h3>
-      <button class="btn-new-sale">
+      <button class="btn-new-sale" @click="openNewSaleModal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
@@ -17,23 +17,31 @@
           <circle cx="11" cy="11" r="8"/>
           <path d="m21 21-4.35-4.35"/>
         </svg>
-        <input type="text" placeholder="Buscar por cliente, producto o número de boleta..." class="search-input" />
+        <input 
+          v-model="searchQuery" 
+          type="text" 
+          placeholder="Buscar por cliente, producto o número de boleta..." 
+          class="search-input" 
+        />
       </div>
-      <select class="filter-select">
-        <option>Hoy</option>
-        <option>Ayer</option>
-        <option>Esta semana</option>
-        <option>Este mes</option>
-      </select>
-      <button class="filter-button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-          <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-          <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
-          <line x1="17" y1="16" x2="23" y2="16"/>
-        </svg>
-      </button>
+      <div class="filter-group">
+        <label class="filter-label">Período</label>
+        <select v-model="selectedPeriod" class="filter-select">
+          <option value="">Todos</option>
+          <option value="today">Hoy</option>
+          <option value="yesterday">Ayer</option>
+          <option value="week">Esta semana</option>
+          <option value="month">Este mes</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Estado</label>
+        <select v-model="selectedStatus" class="filter-select">
+          <option value="">Todos</option>
+          <option value="Completada">Completada</option>
+          <option value="Pendiente">Pendiente</option>
+        </select>
+      </div>
     </div>
 
     <div class="table-wrapper">
@@ -50,14 +58,24 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="sale in sales" :key="sale.id">
+          <tr v-for="sale in paginatedSales" :key="sale.id">
             <td>
               <a :href="`#${sale.boleta}`" class="boleta-link">{{ sale.boleta }}</a>
             </td>
-            <td>{{ sale.cliente }}</td>
-            <td>{{ sale.productos }}</td>
-            <td class="total-cell">{{ sale.total }}</td>
-            <td>{{ sale.fecha }}</td>
+            <td>
+              <div class="client-info">
+                <strong>{{ sale.cliente }}</strong>
+                <span class="dni-text">{{ sale.dni }}</span>
+              </div>
+            </td>
+            <td>{{ sale.cantidadProductos }} productos</td>
+            <td class="total-cell">S/{{ sale.total.toFixed(2) }}</td>
+            <td>
+              <div class="date-info">
+                <span>{{ sale.fechaTexto }}</span>
+                <span class="time-text">{{ sale.hora }}</span>
+              </div>
+            </td>
             <td>
               <span :class="['status-badge', sale.estado.toLowerCase()]">
                 {{ sale.estado }}
@@ -65,20 +83,20 @@
             </td>
             <td>
               <div class="action-buttons">
-                <button class="action-icon" title="Ver">
+                <button class="action-icon" @click="viewSale(sale)" title="Ver">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
                 </button>
-                <button class="action-icon" title="Imprimir">
+                <button class="action-icon" @click="printSale(sale)" title="Imprimir">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="6 9 6 2 18 2 18 9"/>
                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
                     <rect x="6" y="14" width="12" height="8"/>
                   </svg>
                 </button>
-                <button class="action-icon delete" title="Eliminar">
+                <button class="action-icon delete" @click="deleteSale(sale)" title="Eliminar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"/>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -92,50 +110,226 @@
     </div>
 
     <div class="table-footer">
-      <div class="showing-text">Mostrando 1-3 de 48 ventas</div>
+      <div class="showing-text">
+        Mostrando {{ startIndex + 1 }}-{{ endIndex }} de {{ filteredSales.length }} ventas
+      </div>
       <div class="pagination">
-        <button class="page-button">Anterior</button>
-        <button class="page-button active">1</button>
-        <button class="page-button">2</button>
-        <button class="page-button">3</button>
-        <button class="page-button">Siguiente</button>
+        <button class="page-button" @click="goToPage(1)" :disabled="currentPage === 1" title="Primera página">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>
+          </svg>
+        </button>
+        <button class="page-button" @click="previousPage" :disabled="currentPage === 1">Anterior</button>
+        <button 
+          v-for="page in visiblePages" 
+          :key="page"
+          class="page-button" 
+          :class="{ active: currentPage === page }"
+          @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+        <button class="page-button" @click="nextPage" :disabled="currentPage === totalPages">Siguiente</button>
+        <button class="page-button" @click="goToPage(totalPages)" :disabled="currentPage === totalPages" title="Última página">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watch, onMounted, getCurrentInstance } from 'vue';
 
-const sales = ref([
-  {
-    id: 1,
-    boleta: '#B001-245',
-    cliente: 'María González',
-    productos: '3 productos',
-    total: 'S/ 125.50',
-    fecha: '12:45 PM',
-    estado: 'Pagado'
-  },
-  {
-    id: 2,
-    boleta: '#B001-244',
-    cliente: 'Carlos Ruiz',
-    productos: '2 productos',
-    total: 'S/ 89.00',
-    fecha: '11:30 AM',
-    estado: 'Pagado'
-  },
-  {
-    id: 3,
-    boleta: '#B001-243',
-    cliente: 'Ana Torres',
-    productos: '5 productos',
-    total: 'S/ 234.75',
-    fecha: '10:15 AM',
-    estado: 'Pendiente'
+const sales = ref([]);
+const searchQuery = ref('');
+const selectedPeriod = ref('');
+const selectedStatus = ref('');
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+// Obtener referencia al componente padre
+const instance = getCurrentInstance();
+const parent = instance?.parent;
+
+// Abrir modal de nueva venta
+const openNewSaleModal = () => {
+  if (parent && parent.exposed && parent.exposed.openSaleModal) {
+    parent.exposed.openSaleModal();
   }
-]);
+};
+
+// Cargar ventas desde localStorage
+const loadSales = () => {
+  try {
+    const storedSales = localStorage.getItem('sales');
+    if (storedSales) {
+      sales.value = JSON.parse(storedSales);
+    } else {
+      sales.value = [];
+    }
+  } catch (error) {
+    console.error('Error al cargar ventas:', error);
+    sales.value = [];
+  }
+};
+
+// Filtrar ventas
+const filteredSales = computed(() => {
+  let filtered = sales.value;
+  
+  // Filtro de búsqueda
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(sale => 
+      sale.cliente.toLowerCase().includes(query) ||
+      sale.boleta.toLowerCase().includes(query) ||
+      sale.productosTexto.toLowerCase().includes(query)
+    );
+  }
+  
+  // Filtro de período
+  if (selectedPeriod.value) {
+    const now = new Date();
+    filtered = filtered.filter(sale => {
+      const saleDate = new Date(sale.fecha);
+      
+      switch (selectedPeriod.value) {
+        case 'today':
+          return saleDate.toDateString() === now.toDateString();
+        case 'yesterday':
+          const yesterday = new Date(now);
+          yesterday.setDate(yesterday.getDate() - 1);
+          return saleDate.toDateString() === yesterday.toDateString();
+        case 'week':
+          const weekAgo = new Date(now);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return saleDate >= weekAgo;
+        case 'month':
+          const monthAgo = new Date(now);
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          return saleDate >= monthAgo;
+        default:
+          return true;
+      }
+    });
+  }
+  
+  // Filtro de estado
+  if (selectedStatus.value) {
+    filtered = filtered.filter(sale => sale.estado === selectedStatus.value);
+  }
+  
+  return filtered;
+});
+
+// Ventas paginadas
+const paginatedSales = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredSales.value.slice(start, end);
+});
+
+// Total de páginas
+const totalPages = computed(() => {
+  return Math.ceil(filteredSales.value.length / itemsPerPage.value) || 1;
+});
+
+// Índices
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
+const endIndex = computed(() => Math.min(currentPage.value * itemsPerPage.value, filteredSales.value.length));
+
+// Páginas visibles
+const visiblePages = computed(() => {
+  const pages = [];
+  const total = totalPages.value;
+  const current = currentPage.value;
+  
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    if (current <= 4) {
+      for (let i = 1; i <= 5; i++) pages.push(i);
+      pages.push('...');
+      pages.push(total);
+    } else if (current >= total - 3) {
+      pages.push(1);
+      pages.push('...');
+      for (let i = total - 4; i <= total; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      pages.push('...');
+      for (let i = current - 1; i <= current + 1; i++) pages.push(i);
+      pages.push('...');
+      pages.push(total);
+    }
+  }
+  
+  return pages;
+});
+
+// Navegación
+const goToPage = (page) => {
+  if (page !== '...' && page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+};
+
+const previousPage = () => {
+  if (currentPage.value > 1) currentPage.value--;
+};
+
+// Ver venta
+const viewSale = (sale) => {
+  const details = `
+Boleta: ${sale.boleta}
+Cliente: ${sale.cliente}
+DNI: ${sale.dni}
+Productos: ${sale.productosTexto}
+Total: S/${sale.total.toFixed(2)}
+Método de Pago: ${sale.metodoPago}
+Fecha: ${sale.fechaTexto} ${sale.hora}
+  `;
+  alert(details);
+};
+
+// Imprimir venta
+const printSale = (sale) => {
+  alert(`Imprimiendo boleta ${sale.boleta}...`);
+};
+
+// Eliminar venta
+const deleteSale = (sale) => {
+  if (!confirm(`¿Eliminar la venta ${sale.boleta}?`)) return;
+  
+  try {
+    const index = sales.value.findIndex(s => s.id === sale.id);
+    if (index !== -1) {
+      sales.value.splice(index, 1);
+      localStorage.setItem('sales', JSON.stringify(sales.value));
+      window.dispatchEvent(new CustomEvent('sales-updated'));
+    }
+  } catch (error) {
+    console.error('Error al eliminar venta:', error);
+  }
+};
+
+// Watch para resetear página
+watch([searchQuery, selectedPeriod, selectedStatus], () => {
+  currentPage.value = 1;
+});
+
+// Escuchar actualizaciones
+onMounted(() => {
+  loadSales();
+  window.addEventListener('sales-updated', loadSales);
+});
 </script>
 
 <style scoped>
@@ -189,8 +383,24 @@ const sales = ref([
   padding: 16px 24px;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
-  gap: 12px;
-  align-items: center;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .search-box {
@@ -304,7 +514,7 @@ const sales = ref([
   font-weight: 600;
 }
 
-.status-badge.pagado {
+.status-badge.completada {
   background: #dcfce7;
   color: #10b981;
 }
@@ -312,6 +522,65 @@ const sales = ref([
 .status-badge.pendiente {
   background: #fef3c7;
   color: #f59e0b;
+}
+
+.client-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.client-info strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dni-text {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.date-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.time-text {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.page-button {
+  min-width: 36px;
+  height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-button:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.page-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .action-buttons {
@@ -361,26 +630,7 @@ const sales = ref([
 
 .pagination {
   display: flex;
-  gap: 8px;
-}
-
-.page-button {
-  padding: 6px 12px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.page-button:hover {
-  background: #f9fafb;
-}
-
-.page-button.active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+  gap: 6px;
+  align-items: center;
 }
 </style>

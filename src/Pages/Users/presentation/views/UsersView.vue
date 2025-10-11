@@ -2,8 +2,8 @@
   <div class="users-view">
     <div class="users-header">
       <div>
-        <h1 class="page-title">Gestión de Usuarios</h1>
-        <p class="page-subtitle">Administra roles, permisos, accesos y desempeño del personal</p>
+        <h1 class="page-title">{{ $t('users.title') }}</h1>
+        <p class="page-subtitle">{{ $t('users.subtitle') }}</p>
       </div>
     </div>
 

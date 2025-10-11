@@ -16,83 +16,170 @@
           <circle cx="11" cy="11" r="8"/>
           <path d="m21 21-4.35-4.35"/>
         </svg>
-        <input type="text" placeholder="Buscar cliente..." class="search-input" />
+        <input v-model="searchQuery" type="text" placeholder="Buscar cliente..." class="search-input" />
       </div>
 
-      <select class="filter-select">
-        <option>Todos los clientes</option>
-        <option>Clientes frecuentes</option>
-        <option>Nuevos clientes</option>
+      <select v-model="filterType" class="filter-select">
+        <option value="">Todos los clientes</option>
+        <option value="frecuente">Clientes frecuentes</option>
+        <option value="nuevo">Nuevos clientes</option>
       </select>
     </div>
 
-    <div class="customers-grid">
-      <div v-for="customer in customers" :key="customer.id" class="customer-card">
+    <div v-if="filteredCustomers.length > 0" class="customers-grid">
+      <div v-for="customer in filteredCustomers" :key="customer.id" class="customer-card">
         <div class="customer-header">
           <div class="customer-avatar">{{ customer.initials }}</div>
           <div class="customer-info">
             <div class="customer-name">{{ customer.nombre }}</div>
             <div class="customer-type">{{ customer.tipo }}</div>
           </div>
-          <button class="menu-button">⋮</button>
         </div>
         
         <div class="customer-details">
           <div class="detail-row">
             <span class="detail-label">Total compras:</span>
-            <span class="detail-value">{{ customer.totalCompras }}</span>
+            <span class="detail-value">S/{{ customer.totalCompras.toFixed(2) }}</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Última compra:</span>
             <span class="detail-value">{{ customer.ultimaCompra }}</span>
           </div>
           <div class="detail-row">
-            <span class="detail-label">Productos favoritos:</span>
-            <span class="detail-value">{{ customer.productosFavoritos }}</span>
+            <span class="detail-label">Compras realizadas:</span>
+            <span class="detail-value">{{ customer.cantidadCompras }}</span>
           </div>
         </div>
 
-        <button class="view-history-link">Ver historial completo</button>
+        <button class="view-history-link" @click="viewCustomerHistory(customer)">Ver historial completo</button>
       </div>
     </div>
 
-    <button class="view-all-button">Ver todos los clientes →</button>
+    <div v-else class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <p>No hay clientes registrados aún</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
-const customers = ref([
-  {
-    id: 1,
-    nombre: 'María González',
-    tipo: 'Cliente frecuente',
-    initials: 'MG',
-    totalCompras: 'S/ 1,245.50',
-    ultimaCompra: 'Hace 2 días',
-    productosFavoritos: 'Electrónicos'
-  },
-  {
-    id: 2,
-    nombre: 'Carlos Ruiz',
-    tipo: 'Cliente regular',
-    initials: 'CR',
-    totalCompras: 'S/ 678.90',
-    ultimaCompra: 'Hace 1 día',
-    productosFavoritos: 'Herramientas'
-  },
-  {
-    id: 3,
-    nombre: 'Ana Torres',
-    tipo: 'Nuevo cliente',
-    initials: 'AT',
-    totalCompras: 'S/ 234.75',
-    ultimaCompra: 'Hace 3 horas',
-    productosFavoritos: 'Ropa'
+const customers = ref([]);
+const searchQuery = ref('');
+const filterType = ref('');
+
+// Cargar historial de clientes
+const loadCustomerHistory = () => {
+  try {
+    const sales = JSON.parse(localStorage.getItem('sales') || '[]');
+    
+    // Agrupar ventas por cliente
+    const clientesMap = new Map();
+    
+    sales.forEach(sale => {
+      if (!clientesMap.has(sale.cliente)) {
+        clientesMap.set(sale.cliente, {
+          nombre: sale.cliente,
+          dni: sale.dni,
+          ventas: [],
+          totalCompras: 0,
+          cantidadCompras: 0
+        });
+      }
+      
+      const cliente = clientesMap.get(sale.cliente);
+      cliente.ventas.push(sale);
+      cliente.totalCompras += sale.total;
+      cliente.cantidadCompras++;
+    });
+    
+    // Convertir a array y agregar información adicional
+    customers.value = Array.from(clientesMap.values()).map((cliente, index) => {
+      const initials = cliente.nombre
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+      
+      // Determinar tipo de cliente
+      let tipo = 'Nuevo cliente';
+      if (cliente.cantidadCompras >= 5) {
+        tipo = 'Cliente frecuente';
+      } else if (cliente.cantidadCompras >= 2) {
+        tipo = 'Cliente regular';
+      }
+      
+      // Última compra
+      const ultimaVenta = cliente.ventas[0];
+      const ultimaCompra = ultimaVenta ? `${ultimaVenta.fechaTexto} ${ultimaVenta.hora}` : 'N/A';
+      
+      return {
+        id: index + 1,
+        nombre: cliente.nombre,
+        dni: cliente.dni,
+        tipo,
+        initials,
+        totalCompras: cliente.totalCompras,
+        cantidadCompras: cliente.cantidadCompras,
+        ultimaCompra,
+        ventas: cliente.ventas
+      };
+    });
+    
+    // Ordenar por total de compras (descendente)
+    customers.value.sort((a, b) => b.totalCompras - a.totalCompras);
+    
+  } catch (error) {
+    console.error('Error al cargar historial de clientes:', error);
   }
-]);
+};
 
+// Filtrar clientes
+const filteredCustomers = computed(() => {
+  let filtered = customers.value;
+  
+  // Filtro de búsqueda
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(c => 
+      c.nombre.toLowerCase().includes(query) ||
+      c.dni.toLowerCase().includes(query)
+    );
+  }
+  
+  // Filtro por tipo
+  if (filterType.value) {
+    if (filterType.value === 'frecuente') {
+      filtered = filtered.filter(c => c.tipo === 'Cliente frecuente');
+    } else if (filterType.value === 'nuevo') {
+      filtered = filtered.filter(c => c.tipo === 'Nuevo cliente');
+    }
+  }
+  
+  return filtered.slice(0, 6); // Mostrar solo los primeros 6
+});
+
+// Ver historial del cliente
+const viewCustomerHistory = (customer) => {
+  const historial = customer.ventas.map(v => 
+    `Boleta: ${v.boleta} - S/${v.total.toFixed(2)} - ${v.fechaTexto}`
+  ).join('\n');
+  
+  alert(`Historial de ${customer.nombre}:\n\n${historial}`);
+};
+
+onMounted(() => {
+  loadCustomerHistory();
+  window.addEventListener('customer-history-updated', loadCustomerHistory);
+  window.addEventListener('sales-updated', loadCustomerHistory);
+});
 </script>
 
 <style scoped>
@@ -303,5 +390,23 @@ const customers = ref([
 
 .view-all-button:hover {
   background: #f9fafb;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  font-size: 16px;
+  margin: 0;
 }
 </style>

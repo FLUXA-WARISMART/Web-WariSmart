@@ -2,8 +2,8 @@
   <div class="reports-view">
     <div class="reports-header">
       <div>
-        <h1 class="page-title">Reportes</h1>
-        <p class="page-subtitle">Análisis completo de tu negocio en tiempo real</p>
+        <h1 class="page-title">{{ $t('reports.title') }}</h1>
+        <p class="page-subtitle">{{ $t('reports.subtitle') }}</p>
       </div>
       <div class="header-actions">
         <select class="period-select">
@@ -18,7 +18,7 @@
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Exportar
+          {{ $t('inventory.export') }}
         </button>
       </div>
     </div>

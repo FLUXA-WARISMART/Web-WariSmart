@@ -32,13 +32,13 @@
 
     <div class="stat-card">
       <div class="stat-content">
-        <div class="stat-label">Pendientes Pago</div>
+        <div class="stat-label">Proveedores Activos</div>
         <div class="stat-value">{{ stats.pendientesPago }}</div>
       </div>
       <div class="stat-icon orange">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
       </div>
     </div>
@@ -58,16 +58,46 @@
 </template>
 
 <script setup>
-const props = defineProps({
-  stats: {
-    type: Object,
-    default: () => ({
-      totalProveedores: 24,
-      ordenesActivas: 12,
-      pendientesPago: '$45,200',
-      descuentosActivos: 8
-    })
+import { ref, onMounted } from 'vue';
+
+const stats = ref({
+  totalProveedores: 0,
+  ordenesActivas: 0,
+  pendientesPago: 0,
+  descuentosActivos: 0
+});
+
+// Cargar estadísticas
+const loadStats = () => {
+  try {
+    const suppliers = JSON.parse(localStorage.getItem('suppliers') || '[]');
+    
+    // Total proveedores
+    const totalProveedores = suppliers.length;
+    
+    // Proveedores activos
+    const activos = suppliers.filter(s => s.estado === 'Activo');
+    
+    // Órdenes activas (suma de todas las órdenes)
+    const ordenesActivas = suppliers.reduce((sum, s) => sum + (s.ordenes || 0), 0);
+    
+    // Proveedores con descuento activo
+    const descuentosActivos = suppliers.filter(s => s.descuento > 0).length;
+    
+    stats.value = {
+      totalProveedores,
+      ordenesActivas,
+      pendientesPago: activos.length,
+      descuentosActivos
+    };
+  } catch (error) {
+    console.error('Error al cargar estadísticas:', error);
   }
+};
+
+onMounted(() => {
+  loadStats();
+  window.addEventListener('suppliers-updated', loadStats);
 });
 </script>
 

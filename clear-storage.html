@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpiar LocalStorage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #dc2626;
+        }
+        .success {
+            background: #10b981;
+        }
+        .success:hover {
+            background: #059669;
+        }
+        .info {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        pre {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpiar LocalStorage - WariSmart</h1>
+        
+        <button onclick="clearAll()">Limpiar Todo el LocalStorage</button>
+        <button onclick="clearProducts()" class="success">Solo Limpiar Productos</button>
+        <button onclick="showStorage()">Ver Contenido Actual</button>
+        
+        <div class="info" id="info">
+            <strong>Estado:</strong> Esperando acción...
+        </div>
+        
+        <div id="content"></div>
+    </div>
+
+    <script>
+        function clearAll() {
+            localStorage.clear();
+            document.getElementById('info').innerHTML = '<strong>✅ Éxito:</strong> Todo el localStorage ha sido limpiado.';
+            document.getElementById('content').innerHTML = '';
+        }
+
+        function clearProducts() {
+            localStorage.removeItem('inventory_products');
+            localStorage.removeItem('recent_activity');
+            document.getElementById('info').innerHTML = '<strong>✅ Éxito:</strong> Productos y actividad reciente eliminados.';
+            showStorage();
+        }
+
+        function showStorage() {
+            const products = localStorage.getItem('inventory_products');
+            const activity = localStorage.getItem('recent_activity');
+            
+            let html = '<pre>';
+            html += '<strong>📦 inventory_products:</strong>\n';
+            if (products) {
+                const parsed = JSON.parse(products);
+                html += JSON.stringify(parsed, null, 2);
+                html += '\n\n<strong>Total productos:</strong> ' + parsed.length;
+            } else {
+                html += 'null (no existe)';
+            }
+            
+            html += '\n\n<strong>📋 recent_activity:</strong>\n';
+            if (activity) {
+                const parsed = JSON.parse(activity);
+                html += JSON.stringify(parsed, null, 2);
+                html += '\n\n<strong>Total actividades:</strong> ' + parsed.length;
+            } else {
+                html += 'null (no existe)';
+            }
+            
+            html += '</pre>';
+            
+            document.getElementById('content').innerHTML = html;
+            document.getElementById('info').innerHTML = '<strong>ℹ️ Info:</strong> Mostrando contenido actual del localStorage.';
+        }
+
+        // Mostrar contenido al cargar
+        window.onload = showStorage;
+    </script>
+</body>
+</html>

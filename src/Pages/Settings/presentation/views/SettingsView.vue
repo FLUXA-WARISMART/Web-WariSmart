@@ -2,8 +2,8 @@
   <div class="settings-view">
     <div class="settings-header">
       <div>
-        <h1 class="page-title">Configuración</h1>
-        <p class="page-subtitle">Gestiona todas las configuraciones de tu negocio desde un solo lugar</p>
+        <h1 class="page-title">{{ $t('settings.title') }}</h1>
+        <p class="page-subtitle">{{ $t('settings.subtitle') }}</p>
       </div>
     </div>
 

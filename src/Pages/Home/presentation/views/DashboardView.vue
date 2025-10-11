@@ -2,41 +2,41 @@
   <div class="dashboard">
     <div class="dashboard-header">
       <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Resumen general de tu negocio • Hoy, {{ fechaFormatoHoy }}</p>
+        <h1 class="page-title">{{ $t('dashboard.title') }}</h1>
+        <p class="page-subtitle">{{ $t('dashboard.subtitle') }} • {{ $t('dashboard.today') }}, {{ fechaFormatoHoy }}</p>
       </div>
     </div>
 
     <!-- Stats Cards -->
     <div class="stats-grid">
       <StatCard
-        title="Ventas Hoy"
-        value="S/8,450"
-        changeText="+16,5% vs ayer"
-        changeType="positive"
+        :title="$t('dashboard.salesToday')"
+        :value="totalVentasHoy"
+        :changeText="`${cambioVentasVsAyer} ${$t('dashboard.vsYesterday')}`"
+        :changeType="tipoVentasVsAyer"
         :icon="salesIcon"
         iconBgColor="#dcfce7"
       />
       <StatCard
-        title="Productos Vendidos"
-        value="127"
-        changeText="+12,3% vs ayer"
-        changeType="positive"
+        :title="$t('dashboard.productsSold')"
+        :value="productosVendidosHoy.toString()"
+        :changeText="`${cambioProductosVsAyer} ${$t('dashboard.vsYesterday')}`"
+        :changeType="tipoProductosVsAyer"
         :icon="productsIcon"
         iconBgColor="#dbeafe"
       />
       <StatCard
-        title="Stock Total"
-        value="2,847"
-        changeText="10 productos bajo stock"
-        changeType="negative"
+        :title="$t('dashboard.totalStock')"
+        :value="stockTotal.toLocaleString('es-PE')"
+        :changeText="`${productosConBajoStock} ${$t('dashboard.lowStockProducts')}`"
+        :changeType="productosConBajoStock > 0 ? 'negative' : 'neutral'"
         :icon="stockIcon"
         iconBgColor="#fed7aa"
       />
       <StatCard
-        title="Proveedores Activos"
-        value="24"
-        changeText="3 pedidos pendientes"
+        :title="$t('dashboard.activeSuppliers')"
+        :value="proveedoresActivos.toString()"
+        :changeText="`${pedidosPendientes} ${$t('dashboard.pendingOrders')}`"
         changeType="neutral"
         :icon="suppliersIcon"
         iconBgColor="#e9d5ff"
@@ -80,9 +80,164 @@ import QuickActions from '../components/QuickActions.vue';
 import LowStockProducts from '../components/LowStockProducts.vue';
 import ExpirationAlerts from '../components/ExpirationAlerts.vue';
 import RecentActivity from '../components/RecentActivity.vue';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 const fechaFormatoHoy = ref('');
+const productos = ref([]);
+const ventas = ref([]);
+const proveedores = ref([]);
+
+// Cargar todos los datos desde localStorage
+const loadAllData = () => {
+  loadProductos();
+  loadVentas();
+  loadProveedores();
+};
+
+// Cargar productos desde localStorage
+const loadProductos = () => {
+  try {
+    const stored = localStorage.getItem('inventory_products');
+    if (stored) {
+      productos.value = JSON.parse(stored);
+      console.log('📊 Dashboard: Productos cargados:', productos.value.length);
+    } else {
+      productos.value = [];
+    }
+  } catch (error) {
+    console.error('Error cargando productos en Dashboard:', error);
+    productos.value = [];
+  }
+};
+
+// Cargar ventas desde localStorage
+const loadVentas = () => {
+  try {
+    const stored = localStorage.getItem('sales');
+    if (stored) {
+      ventas.value = JSON.parse(stored);
+      console.log('💰 Dashboard: Ventas cargadas:', ventas.value.length);
+    } else {
+      ventas.value = [];
+    }
+  } catch (error) {
+    console.error('Error cargando ventas en Dashboard:', error);
+    ventas.value = [];
+  }
+};
+
+// Cargar proveedores desde localStorage
+const loadProveedores = () => {
+  try {
+    const stored = localStorage.getItem('suppliers');
+    if (stored) {
+      proveedores.value = JSON.parse(stored);
+      console.log('🏢 Dashboard: Proveedores cargados:', proveedores.value.length);
+    } else {
+      proveedores.value = [];
+    }
+  } catch (error) {
+    console.error('Error cargando proveedores en Dashboard:', error);
+    proveedores.value = [];
+  }
+};
+
+// ========== ESTADÍSTICAS CALCULADAS ==========
+
+// Total de productos en inventario
+const totalProductos = computed(() => {
+  return productos.value.length;
+});
+
+// Stock total
+const stockTotal = computed(() => {
+  return productos.value.reduce((sum, p) => sum + (p.stock || 0), 0);
+});
+
+// Productos con bajo stock (stock <= 10 y > 0)
+const productosConBajoStock = computed(() => {
+  return productos.value.filter(p => p.stock > 0 && p.stock <= 10).length;
+});
+
+// Productos sin stock
+const productosSinStock = computed(() => {
+  return productos.value.filter(p => p.stock === 0).length;
+});
+
+// Ventas de hoy
+const ventasHoy = computed(() => {
+  const hoy = new Date().toLocaleDateString('es-PE');
+  return ventas.value.filter(v => v.fechaTexto === hoy);
+});
+
+// Total de ventas de hoy en soles
+const totalVentasHoy = computed(() => {
+  const total = ventasHoy.value.reduce((sum, v) => sum + (v.total || 0), 0);
+  return `S/${total.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+});
+
+// Productos vendidos hoy
+const productosVendidosHoy = computed(() => {
+  return ventasHoy.value.reduce((sum, v) => sum + (v.cantidadProductos || 0), 0);
+});
+
+// Ventas de ayer para comparación
+const ventasAyer = computed(() => {
+  const ayer = new Date();
+  ayer.setDate(ayer.getDate() - 1);
+  const ayerStr = ayer.toLocaleDateString('es-PE');
+  return ventas.value.filter(v => v.fechaTexto === ayerStr);
+});
+
+// Total de ventas de ayer
+const totalVentasAyer = computed(() => {
+  return ventasAyer.value.reduce((sum, v) => sum + (v.total || 0), 0);
+});
+
+// Productos vendidos ayer
+const productosVendidosAyer = computed(() => {
+  return ventasAyer.value.reduce((sum, v) => sum + (v.cantidadProductos || 0), 0);
+});
+
+// Cambio porcentual de ventas vs ayer
+const cambioVentasVsAyer = computed(() => {
+  if (totalVentasAyer.value === 0) {
+    return ventasHoy.value.length > 0 ? '+100%' : '0%';
+  }
+  const cambio = ((ventasHoy.value.reduce((sum, v) => sum + v.total, 0) - totalVentasAyer.value) / totalVentasAyer.value * 100);
+  return cambio >= 0 ? `+${cambio.toFixed(1)}%` : `${cambio.toFixed(1)}%`;
+});
+
+// Cambio porcentual de productos vendidos vs ayer
+const cambioProductosVsAyer = computed(() => {
+  if (productosVendidosAyer.value === 0) {
+    return productosVendidosHoy.value > 0 ? '+100%' : '0%';
+  }
+  const cambio = ((productosVendidosHoy.value - productosVendidosAyer.value) / productosVendidosAyer.value * 100);
+  return cambio >= 0 ? `+${cambio.toFixed(1)}%` : `${cambio.toFixed(1)}%`;
+});
+
+// Tipo de cambio (positivo, negativo o neutral)
+const tipoVentasVsAyer = computed(() => {
+  const cambio = parseFloat(cambioVentasVsAyer.value);
+  return cambio > 0 ? 'positive' : cambio < 0 ? 'negative' : 'neutral';
+});
+
+const tipoProductosVsAyer = computed(() => {
+  const cambio = parseFloat(cambioProductosVsAyer.value);
+  return cambio > 0 ? 'positive' : cambio < 0 ? 'negative' : 'neutral';
+});
+
+// Proveedores activos
+const proveedoresActivos = computed(() => {
+  return proveedores.value.filter(p => p.estado === 'Activo' || !p.estado).length;
+});
+
+// Pedidos pendientes (simulado - puedes agregar lógica real después)
+const pedidosPendientes = computed(() => {
+  // Por ahora retornamos 0, pero puedes implementar lógica de pedidos
+  return 0;
+});
 
 onMounted(() => {
   const fecha = new Date();
@@ -91,6 +246,21 @@ onMounted(() => {
     month: 'long',
     year: 'numeric'
   }).format(fecha);
+  
+  // Cargar todos los datos
+  loadAllData();
+  
+  // Escuchar actualizaciones
+  window.addEventListener('product-updated', loadProductos);
+  window.addEventListener('sales-updated', loadVentas);
+  window.addEventListener('supplier-updated', loadProveedores);
+});
+
+onUnmounted(() => {
+  // Limpiar event listeners
+  window.removeEventListener('product-updated', loadProductos);
+  window.removeEventListener('sales-updated', loadVentas);
+  window.removeEventListener('supplier-updated', loadProveedores);
 });
 
 // Icons as components

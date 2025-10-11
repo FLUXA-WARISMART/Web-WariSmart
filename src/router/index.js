@@ -41,6 +41,12 @@ const routes = [
         name: 'LocalStorage',
         component: () => import('../WebStorage/components/LocalStorage.component.vue'),
         alias: '/storage'
+    },
+    {
+        path: '/api-docs',
+        name: 'ApiDocs',
+        component: () => import('../Pages/ApiDocs/ApiDocsView.vue'),
+        alias: '/api'
     }
 ];
 

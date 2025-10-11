@@ -82,28 +82,53 @@ onMounted(() => {
   // Escuchar eventos de actualización
   window.addEventListener('update-stats', updateStats);
   
+  // También escuchar cuando se actualicen productos
+  window.addEventListener('product-updated', loadInitialStats);
+  
   // Limpiar el event listener cuando el componente se desmonte
   return () => {
     window.removeEventListener('update-stats', updateStats);
+    window.removeEventListener('product-updated', loadInitialStats);
   };
 });
 
 // Cargar estadísticas iniciales desde LocalStorage
 const loadInitialStats = () => {
   try {
-    const storedProducts = localStorage.getItem('productos');
+    const storedProducts = localStorage.getItem('inventory_products');
     if (storedProducts) {
       const products = JSON.parse(storedProducts);
       const totalProducts = products.length;
-      const lowStock = products.filter(p => p.stockActual <= p.stockMinimo && p.stockActual > 0).length;
-      const outOfStock = products.filter(p => p.stockActual === 0).length;
-      const totalValue = products.reduce((sum, p) => sum + (p.precio * p.stockActual), 0);
+      const lowStock = products.filter(p => p.stock <= 10 && p.stock > 0).length;
+      const outOfStock = products.filter(p => p.stock === 0).length;
+      
+      // Calcular valor total: precio * cantidad de cada producto
+      const totalValue = products.reduce((sum, p) => {
+        const precio = parseFloat(p.precioVenta) || 0;
+        const cantidad = parseInt(p.stock) || 0;
+        return sum + (precio * cantidad);
+      }, 0);
+      
+      console.log('📊 Estadísticas calculadas:', {
+        totalProducts,
+        lowStock,
+        outOfStock,
+        totalValue
+      });
       
       stats.value = {
         totalProducts,
         lowStock,
         outOfStock,
         totalValue: `S/${totalValue.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      };
+    } else {
+      // Si no hay productos, resetear a 0
+      stats.value = {
+        totalProducts: 0,
+        lowStock: 0,
+        outOfStock: 0,
+        totalValue: 'S/0.00'
       };
     }
   } catch (error) {

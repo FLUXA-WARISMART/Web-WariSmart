@@ -3,9 +3,9 @@
     <div class="stat-card">
       <div class="stat-content">
         <div class="stat-label">Ventas Hoy</div>
-        <div class="stat-value">{{ stats.ventasHoy }}</div>
-        <div class="stat-change positive">
-          <span>↑</span> +12% vs ayer
+        <div class="stat-value">S/{{ stats.ventasHoy.toFixed(2) }}</div>
+        <div class="stat-change">
+          {{ stats.totalVentasHoy }} ventas
         </div>
       </div>
       <div class="stat-icon blue">
@@ -20,8 +20,8 @@
       <div class="stat-content">
         <div class="stat-label">Boletas Emitidas</div>
         <div class="stat-value">{{ stats.boletasEmitidas }}</div>
-        <div class="stat-change positive">
-          <span>↑</span> +8 vs ayer
+        <div class="stat-change">
+          Total registradas
         </div>
       </div>
       <div class="stat-icon green">
@@ -39,8 +39,8 @@
       <div class="stat-content">
         <div class="stat-label">Clientes Atendidos</div>
         <div class="stat-value">{{ stats.clientesAtendidos }}</div>
-        <div class="stat-change positive">
-          <span>↑</span> +5 vs ayer
+        <div class="stat-change">
+          Clientes únicos
         </div>
       </div>
       <div class="stat-icon purple">
@@ -56,9 +56,9 @@
     <div class="stat-card">
       <div class="stat-content">
         <div class="stat-label">Ticket Promedio</div>
-        <div class="stat-value">{{ stats.ticketPromedio }}</div>
-        <div class="stat-change negative">
-          <span>↓</span> -3% vs ayer
+        <div class="stat-value">S/{{ stats.ticketPromedio.toFixed(2) }}</div>
+        <div class="stat-change">
+          Por venta
         </div>
       </div>
       <div class="stat-icon orange">
@@ -71,16 +71,47 @@
 </template>
 
 <script setup>
-const props = defineProps({
-  stats: {
-    type: Object,
-    default: () => ({
-      ventasHoy: 'S/ 2,450',
-      boletasEmitidas: 48,
-      clientesAtendidos: 32,
-      ticketPromedio: 'S/ 76.50'
-    })
+import { ref, onMounted } from 'vue';
+
+const stats = ref({
+  ventasHoy: 0,
+  totalVentasHoy: 0,
+  boletasEmitidas: 0,
+  clientesAtendidos: 0,
+  ticketPromedio: 0
+});
+
+// Cargar estadísticas
+const loadStats = () => {
+  try {
+    const sales = JSON.parse(localStorage.getItem('sales') || '[]');
+    
+    // Ventas de hoy
+    const today = new Date().toDateString();
+    const ventasHoy = sales.filter(s => new Date(s.fecha).toDateString() === today);
+    const totalVentasHoy = ventasHoy.reduce((sum, s) => sum + s.total, 0);
+    
+    // Clientes únicos
+    const clientesUnicos = new Set(sales.map(s => s.cliente)).size;
+    
+    // Ticket promedio
+    const ticketPromedio = sales.length > 0 ? sales.reduce((sum, s) => sum + s.total, 0) / sales.length : 0;
+    
+    stats.value = {
+      ventasHoy: totalVentasHoy,
+      totalVentasHoy: ventasHoy.length,
+      boletasEmitidas: sales.length,
+      clientesAtendidos: clientesUnicos,
+      ticketPromedio: ticketPromedio
+    };
+  } catch (error) {
+    console.error('Error al cargar estadísticas:', error);
   }
+};
+
+onMounted(() => {
+  loadStats();
+  window.addEventListener('sales-updated', loadStats);
 });
 </script>
 

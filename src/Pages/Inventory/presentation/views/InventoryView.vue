@@ -4,7 +4,7 @@
     <div v-if="showProductModal" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content wide-modal">
         <div class="modal-header">
-          <h3>{{ editingProduct ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
+          <h3>{{ editingProduct ? $t('inventory.editProduct') : $t('inventory.newProduct') }}</h3>
           <button class="close-button" @click="closeModal">&times;</button>
         </div>
         <div class="modal-body">
@@ -21,7 +21,7 @@
                       <path d="M21 15l-3.1-3.1a2 2 0 0 0-2.8 0L9 18"/>
                       <path d="M14 14l1-1a2 2 0 0 1 2.8 0L21 17"/>
                     </svg>
-                    <span>Haz clic para subir una imagen</span>
+                    <span>{{ $t('inventory.clickToUpload') }}</span>
                   </div>
                 </div>
                 <input 
@@ -33,8 +33,8 @@
                   style="display: none;"
                 >
                 <div class="image-actions" v-if="imagePreview">
-                  <button type="button" class="btn-change" @click="triggerFileInput">Cambiar imagen</button>
-                  <button type="button" class="btn-remove" @click="removeImage">Eliminar</button>
+                  <button type="button" class="btn-change" @click="triggerFileInput">{{ $t('inventory.changeImage') }}</button>
+                  <button type="button" class="btn-remove" @click="removeImage">{{ $t('inventory.remove') }}</button>
                 </div>
               </div>
 
@@ -42,7 +42,7 @@
               <div class="form-column form-fields">
                 <div class="form-row">
                   <div class="form-group">
-                    <label for="codigo">Código/SKU *</label>
+                    <label for="codigo">{{ $t('inventory.code') }} *</label>
                     <input 
                       type="text" 
                       id="codigo" 
@@ -53,16 +53,16 @@
                     >
                   </div>
                   <div class="form-group">
-                    <label for="categoria">Categoría *</label>
+                    <label for="categoria">{{ $t('inventory.category') }} *</label>
                     <select id="categoria" v-model="newProduct.categoria" required class="form-control">
-                      <option value="">Seleccionar</option>
+                      <option value="">{{ $t('inventory.select') }}</option>
                       <option v-for="category in categorias" :key="category" :value="category">{{ category }}</option>
                     </select>
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label for="producto">Nombre del Producto *</label>
+                  <label for="producto">{{ $t('inventory.productName') }} *</label>
                   <input 
                     type="text" 
                     id="producto" 
@@ -75,7 +75,7 @@
 
                 <div class="form-row">
                   <div class="form-group">
-                    <label for="precio">Precio (S/) *</label>
+                    <label for="precio">{{ $t('inventory.price') }} (S/) *</label>
                     <div class="input-group">
                       <span class="input-group-text">S/</span>
                       <input 
@@ -91,20 +91,21 @@
                     </div>
                   </div>
                   <div class="form-group">
-                    <label for="stock-actual">Stock Inicial *</label>
+                    <label for="stock-actual">{{ $t('inventory.initialStock') }} *</label>
                     <input 
                       type="number" 
                       id="stock-actual" 
                       v-model.number="newProduct.stockActual" 
                       required
                       min="0"
+                      placeholder="0"
                       class="form-control"
                     >
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label for="descripcion">Descripción</label>
+                  <label for="descripcion">{{ $t('inventory.description') }}</label>
                   <textarea 
                     id="descripcion" 
                     v-model="newProduct.descripcion" 
@@ -118,11 +119,11 @@
 
             <div class="form-actions">
               <button type="button" class="btn btn-outline-secondary" @click="closeModal">
-                Cancelar
+                {{ $t('inventory.cancel') }}
               </button>
               <button type="submit" class="btn btn-primary">
-                <span v-if="editingProduct">Actualizar Producto</span>
-                <span v-else>Agregar Producto</span>
+                <span v-if="editingProduct">{{ $t('inventory.save') }}</span>
+                <span v-else>{{ $t('inventory.save') }}</span>
               </button>
             </div>
           </form>
@@ -132,21 +133,21 @@
 
     <div class="inventory-header">
       <div>
-        <h1 class="page-title">Gestión de Inventario</h1>
-        <p class="page-subtitle">Control completo de productos, stock y movimientos</p>
+        <h1 class="page-title">{{ $t('inventory.title') }}</h1>
+        <p class="page-subtitle">{{ $t('inventory.subtitle') }}</p>
       </div>
       <div class="header-actions">
         <button class="btn-secondary">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Exportar
+          {{ $t('inventory.export') }}
         </button>
         <button class="btn-primary" @click="openNewProductModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Nuevo Producto
+          {{ $t('inventory.newProduct') }}
         </button>
       </div>
     </div>
@@ -170,7 +171,7 @@
     </div>
 
     <!-- Products Table -->
-    <ProductsTable v-if="activeTab === 'products'" />
+    <ProductsTable v-if="activeTab === 'products'" @edit-product="openEditProductModal" />
 
     <!-- Quick Actions -->
     <QuickActionsInventory />
@@ -241,21 +242,50 @@ function createEmptyProduct() {
 }
 
 // Abrir modal de nuevo producto
-const openNewProductModal = (product = null) => {
-  editingProduct.value = product ? { ...product } : null;
+const openNewProductModal = () => {
+  console.log('🆕 Abriendo modal de nuevo producto');
   
-  // Resetear el formulario
+  // Resetear editingProduct
+  editingProduct.value = null;
+  
+  // Resetear formulario
   resetForm();
   
-  // Si estamos editando, cargar los datos del producto
-  if (product) {
-    newProduct.value = { ...product };
-    if (product.imagen) {
-      imagePreview.value = product.imagen;
-    }
+  // Abrir modal
+  showProductModal.value = true;
+  
+  console.log('✅ Modal de nuevo producto abierto');
+};
+
+// Abrir modal para editar producto
+const openEditProductModal = (product) => {
+  console.log('📝 Abriendo modal de edición con producto:', product);
+  
+  // Establecer que estamos editando
+  editingProduct.value = { ...product };
+  
+  // Cargar datos en el formulario con la estructura correcta
+  newProduct.value = {
+    codigo: product.codigo,
+    nombre: product.nombre,
+    descripcion: product.descripcion || '',
+    categoria: product.categoria,
+    precio: product.precioVenta,
+    stockActual: product.stock,
+    imagen: product.imagen || null
+  };
+  
+  // Cargar imagen preview si existe
+  if (product.imagen) {
+    imagePreview.value = product.imagen;
+  } else {
+    imagePreview.value = '';
   }
   
+  // Abrir modal
   showProductModal.value = true;
+  
+  console.log('✅ Modal de edición abierto con datos:', newProduct.value);
   
   // Enfocar el primer campo
   nextTick(() => {
@@ -325,15 +355,32 @@ const closeModal = () => {
 // Guardar producto en LocalStorage
 const saveProduct = async () => {
   try {
+    console.log('🔵 Iniciando guardado de producto...');
+    console.log('Datos del formulario:', newProduct.value);
+    
     // Validar campos requeridos
     if (!newProduct.value.codigo || !newProduct.value.nombre || 
-        !newProduct.value.categoria || newProduct.value.precio <= 0) {
+        !newProduct.value.categoria || !newProduct.value.precio || newProduct.value.precio <= 0) {
+      console.log('❌ Validación fallida:', {
+        codigo: newProduct.value.codigo,
+        nombre: newProduct.value.nombre,
+        categoria: newProduct.value.categoria,
+        precio: newProduct.value.precio
+      });
       alert('Por favor complete todos los campos requeridos');
+      return;
+    }
+    
+    // Validar stock (puede ser 0)
+    if (newProduct.value.stockActual === null || newProduct.value.stockActual === undefined || newProduct.value.stockActual === '') {
+      console.log('❌ Stock no válido:', newProduct.value.stockActual);
+      alert('Por favor ingrese el stock inicial (puede ser 0)');
       return;
     }
     
     // Obtener productos existentes o inicializar array vacío
     const productos = JSON.parse(localStorage.getItem('inventory_products') || '[]');
+    console.log('📦 Productos existentes:', productos.length);
     
     // Si hay una imagen, convertirla a base64
     if (imageFile.value) {
@@ -357,33 +404,54 @@ const saveProduct = async () => {
       fechaCreacion: editingProduct.value ? editingProduct.value.fechaCreacion : new Date().toISOString()
     };
     
+    console.log('✅ Producto a guardar:', producto);
+    console.log('🔍 editingProduct.value:', editingProduct.value);
+    console.log('🔍 ¿Es edición?:', !!editingProduct.value);
+    
     if (editingProduct.value) {
       // Actualizar producto existente
       const index = productos.findIndex(p => p.id === editingProduct.value.id);
       if (index !== -1) {
         productos[index] = producto;
-        alert('Producto actualizado exitosamente');
+        console.log('📝 Producto actualizado en índice:', index);
       }
     } else {
       // Agregar nuevo producto
       productos.push(producto);
-      alert('Producto agregado exitosamente');
+      console.log('➕ Nuevo producto agregado. Total productos:', productos.length);
+      console.log('📋 Array de productos antes de guardar:', productos);
     }
     
-    // Guardar en LocalStorage
-    localStorage.setItem('inventory_products', JSON.stringify(productos));
+    // Convertir a JSON para ver qué se va a guardar
+    const jsonToSave = JSON.stringify(productos);
+    console.log('📝 JSON a guardar:', jsonToSave);
+    console.log('📏 Longitud del JSON:', jsonToSave.length);
     
-    // Cerrar modal y actualizar la lista
+    // Guardar en LocalStorage
+    localStorage.setItem('inventory_products', jsonToSave);
+    console.log('💾 Guardado en localStorage completado');
+    
+    // Verificar que se guardó correctamente
+    const verificacion = localStorage.getItem('inventory_products');
+    console.log('🔍 Verificación - Raw localStorage:', verificacion);
+    console.log('🔍 Verificación - Productos en localStorage:', JSON.parse(verificacion).length);
+    console.log('🔍 Verificación - Productos parseados:', JSON.parse(verificacion));
+    
+    // Cerrar modal y resetear formulario
     showProductModal.value = false;
+    resetForm();
     
     // Disparar evento para actualizar la tabla
+    console.log('📢 Disparando evento product-updated');
     window.dispatchEvent(new CustomEvent('product-updated'));
     
     // Agregar a actividad reciente
     addToRecentActivity(producto, editingProduct.value ? 'editado' : 'agregado');
     
+    alert('Producto guardado exitosamente');
+    
   } catch (error) {
-    console.error('Error al guardar el producto:', error);
+    console.error('❌ Error al guardar el producto:', error);
     alert('Ocurrió un error al guardar el producto: ' + error.message);
   }
 };
@@ -401,31 +469,8 @@ const fileToBase64 = (file) => {
 // Cargar datos iniciales si no existen
 const initializeLocalStorage = () => {
   if (!localStorage.getItem('inventory_products')) {
-    const productosIniciales = [
-      {
-        id: 1,
-        codigo: 'IP-14PRO-001',
-        nombre: 'iPhone 14 Pro',
-        categoria: 'Electrónicos',
-        precioVenta: 999.00,
-        stock: 45,
-        descripcion: 'Último modelo de iPhone con pantalla ProMotion',
-        fechaCreacion: new Date().toISOString(),
-        imagen: ''
-      },
-      {
-        id: 2,
-        codigo: 'MBA13M2001',
-        nombre: 'MacBook Air M2',
-        categoria: 'Electrónicos',
-        precioVenta: 1299.00,
-        stock: 3,
-        descripcion: 'Portátil ultradelgado con chip M2',
-        fechaCreacion: new Date().toISOString(),
-        imagen: ''
-      }
-    ];
-    localStorage.setItem('inventory_products', JSON.stringify(productosIniciales));
+    // Inicializar con array vacío
+    localStorage.setItem('inventory_products', JSON.stringify([]));
   }
 };
 
@@ -433,13 +478,25 @@ const initializeLocalStorage = () => {
 const addToRecentActivity = (producto, accion) => {
   try {
     const actividades = JSON.parse(localStorage.getItem('recent_activity') || '[]');
+    
+    let title, color, iconTemplate;
+    if (accion === 'editado') {
+      title = 'Producto editado';
+      color = '#dbeafe';
+      iconTemplate = '<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    } else {
+      title = 'Nuevo producto agregado';
+      color = '#dcfce7';
+      iconTemplate = '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    }
+    
     const nuevaActividad = {
       id: Date.now(),
-      title: accion === 'editado' ? 'Producto editado' : 'Nuevo producto agregado',
+      title: title,
       description: `${producto.nombre} (${producto.codigo}) - ${producto.categoria}`,
       time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-      color: '#dcfce7',
-      icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' }
+      color: color,
+      icon: { template: iconTemplate }
     };
     
     actividades.unshift(nuevaActividad);
@@ -470,10 +527,10 @@ onMounted(() => {
 });
 
 const stats = ref({
-  totalProducts: 1247,
-  lowStock: 23,
-  expiring: 8,
-  totalValue: 'S/89,450'
+  totalProducts: 0,
+  lowStock: 0,
+  expiring: 0,
+  totalValue: 'S/0.00'
 });
 
 const activeTab = ref('products');
@@ -516,32 +573,7 @@ const tabs = [
   }
 ];
 
-const recentActivity = ref([
-  {
-    id: 1,
-    title: 'Recepción de mercadería',
-    description: '20 unidades de iPhone 14 Pro agregadas',
-    time: 'Hace 2 horas',
-    color: '#dcfce7',
-    icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' }
-  },
-  {
-    id: 2,
-    title: 'Alerta de stock bajo',
-    description: 'MacBook Air M2 tiene solo 3 unidades',
-    time: 'Hace 4 horas',
-    color: '#fed7aa',
-    icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>' }
-  },
-  {
-    id: 3,
-    title: 'Auditoría completada',
-    description: 'Sección Electrónicos - Almacén Principal',
-    time: 'Ayer',
-    color: '#dbeafe',
-    icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' }
-  }
-]);
+const recentActivity = ref([]);
 </script>
 
 <style scoped>

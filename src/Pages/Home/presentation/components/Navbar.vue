@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar">
     <div class="navbar-brand">
-      <h1 class="brand-name">WARISMART</h1>
+      <h1 class="brand-name">{{ $t('navbar.brand') }}</h1>
     </div>
     
     <div class="navbar-menu">
@@ -12,7 +12,7 @@
         :class="['menu-item']"
         active-class="active"
       >
-        {{ item.label }}
+        {{ $t(item.labelKey) }}
       </router-link>
     </div>
     
@@ -22,8 +22,10 @@
           <circle cx="11" cy="11" r="8"/>
           <path d="m21 21-4.35-4.35"/>
         </svg>
-        <input type="text" placeholder="Buscar..." class="search-input" />
+        <input type="text" :placeholder="$t('navbar.search')" class="search-input" />
       </div>
+      
+      <LanguageSwitcher />
       
       <button class="notification-button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -42,15 +44,16 @@
 
 <script setup>
 import { ref } from 'vue';
+import LanguageSwitcher from '../../../../shared/presentation/components/LanguageSwitcher.vue';
 
 const menuItems = ref([
-  { id: 'dashboard', label: 'Dashboard', to: '/' },
-  { id: 'inventory', label: 'Inventario', to: '/inventario' },
-  { id: 'sales', label: 'Ventas', to: '/ventas' },
-  { id: 'suppliers', label: 'Proveedores', to: '/proveedores' },
-  { id: 'reports', label: 'Reportes', to: '/reportes' },
-  { id: 'users', label: 'Gestión de usuarios', to: '/usuarios' },
-  { id: 'config', label: 'Configuración', to: '/configuracion' }
+  { id: 'dashboard', labelKey: 'navbar.dashboard', to: '/' },
+  { id: 'inventory', labelKey: 'navbar.inventory', to: '/inventario' },
+  { id: 'sales', labelKey: 'navbar.sales', to: '/ventas' },
+  { id: 'suppliers', labelKey: 'navbar.suppliers', to: '/proveedores' },
+  { id: 'reports', labelKey: 'navbar.reports', to: '/reportes' },
+  { id: 'users', labelKey: 'navbar.users', to: '/usuarios' },
+  { id: 'config', labelKey: 'navbar.settings', to: '/configuracion' }
 ]);
 </script>
 
