@@ -121,12 +121,25 @@ const products = ref([]);
 // Función para cargar productos desde LocalStorage
 const loadProducts = () => {
   try {
-    const storedProducts = localStorage.getItem('productos');
+    const storedProducts = localStorage.getItem('inventory_products');
     if (storedProducts) {
-      products.value = JSON.parse(storedProducts);
+      const parsedProducts = JSON.parse(storedProducts);
+      // Mapear los productos a la estructura esperada por la tabla
+      products.value = parsedProducts.map(p => ({
+        id: p.id,
+        name: p.nombre,
+        code: p.codigo,
+        category: p.categoria,
+        stockActual: p.stock,
+        stockMinimo: 10, // Valor por defecto
+        ubicacion: 'Almacén Principal', // Valor por defecto
+        precio: p.precioVenta,
+        brand: p.categoria,
+        icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>' }
+      }));
       
       // Actualizar estadísticas
-      updateStats(products.value);
+      updateStats(parsedProducts);
     }
   } catch (error) {
     console.error('Error al cargar productos desde LocalStorage:', error);
@@ -136,9 +149,9 @@ const loadProducts = () => {
 // Función para actualizar estadísticas
 const updateStats = (productList) => {
   const totalProducts = productList.length;
-  const lowStock = productList.filter(p => p.stockActual <= p.stockMinimo && p.stockActual > 0).length;
-  const outOfStock = productList.filter(p => p.stockActual === 0).length;
-  const totalValue = productList.reduce((sum, p) => sum + (p.precio * p.stockActual), 0);
+  const lowStock = productList.filter(p => p.stock <= 10 && p.stock > 0).length;
+  const outOfStock = productList.filter(p => p.stock === 0).length;
+  const totalValue = productList.reduce((sum, p) => sum + (p.precioVenta * p.stock), 0);
   
   // Emitir evento para actualizar las estadísticas en el componente padre
   window.dispatchEvent(new CustomEvent('update-stats', {

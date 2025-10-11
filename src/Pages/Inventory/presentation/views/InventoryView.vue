@@ -333,7 +333,7 @@ const saveProduct = async () => {
     }
     
     // Obtener productos existentes o inicializar array vacío
-    const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+    const productos = JSON.parse(localStorage.getItem('inventory_products') || '[]');
     
     // Si hay una imagen, convertirla a base64
     if (imageFile.value) {
@@ -344,45 +344,43 @@ const saveProduct = async () => {
       newProduct.value.imagen = null;
     }
     
+    // Crear objeto del producto con estructura correcta
+    const producto = {
+      id: editingProduct.value ? editingProduct.value.id : Date.now(),
+      codigo: newProduct.value.codigo,
+      nombre: newProduct.value.nombre,
+      descripcion: newProduct.value.descripcion || '',
+      categoria: newProduct.value.categoria,
+      precioVenta: parseFloat(newProduct.value.precio),
+      stock: parseInt(newProduct.value.stockActual) || 0,
+      imagen: newProduct.value.imagen || '',
+      fechaCreacion: editingProduct.value ? editingProduct.value.fechaCreacion : new Date().toISOString()
+    };
+    
     if (editingProduct.value) {
       // Actualizar producto existente
       const index = productos.findIndex(p => p.id === editingProduct.value.id);
       if (index !== -1) {
-        // Mantener el ID y la fecha de creación original
-        newProduct.value.id = editingProduct.value.id;
-        newProduct.value.fechaCreacion = productos[index].fechaCreacion;
-        
-        // Actualizar el producto
-        productos[index] = { ...newProduct.value };
-        
-        // Mostrar mensaje de éxito
+        productos[index] = producto;
         alert('Producto actualizado exitosamente');
       }
     } else {
-      // Crear nuevo producto
-      const nuevoId = productos.length > 0 
-        ? Math.max(...productos.map(p => p.id)) + 1 
-        : 1;
-      
-      // Asignar ID y fecha de creación
-      newProduct.value.id = nuevoId;
-      newProduct.value.fechaCreacion = new Date().toISOString().split('T')[0];
-      
-      // Agregar el nuevo producto
-      productos.push({ ...newProduct.value });
-      
-      // Mostrar mensaje de éxito
+      // Agregar nuevo producto
+      productos.push(producto);
       alert('Producto agregado exitosamente');
     }
     
     // Guardar en LocalStorage
-    localStorage.setItem('productos', JSON.stringify(productos));
+    localStorage.setItem('inventory_products', JSON.stringify(productos));
     
     // Cerrar modal y actualizar la lista
     showProductModal.value = false;
     
     // Disparar evento para actualizar la tabla
     window.dispatchEvent(new CustomEvent('product-updated'));
+    
+    // Agregar a actividad reciente
+    addToRecentActivity(producto, editingProduct.value ? 'editado' : 'agregado');
     
   } catch (error) {
     console.error('Error al guardar el producto:', error);
@@ -402,38 +400,73 @@ const fileToBase64 = (file) => {
 
 // Cargar datos iniciales si no existen
 const initializeLocalStorage = () => {
-  if (!localStorage.getItem('productos')) {
+  if (!localStorage.getItem('inventory_products')) {
     const productosIniciales = [
       {
         id: 1,
         codigo: 'IP-14PRO-001',
         nombre: 'iPhone 14 Pro',
         categoria: 'Electrónicos',
-        precio: 999.00,
-        stockActual: 45,
+        precioVenta: 999.00,
+        stock: 45,
         descripcion: 'Último modelo de iPhone con pantalla ProMotion',
-        fechaCreacion: new Date().toISOString().split('T')[0],
-        estado: 'Activo'
+        fechaCreacion: new Date().toISOString(),
+        imagen: ''
       },
       {
         id: 2,
         codigo: 'MBA13M2001',
         nombre: 'MacBook Air M2',
         categoria: 'Electrónicos',
-        precio: 1299.00,
-        stockActual: 3,
+        precioVenta: 1299.00,
+        stock: 3,
         descripcion: 'Portátil ultradelgado con chip M2',
-        fechaCreacion: new Date().toISOString().split('T')[0],
-        estado: 'Activo'
+        fechaCreacion: new Date().toISOString(),
+        imagen: ''
       }
     ];
-    localStorage.setItem('productos', JSON.stringify(productosIniciales));
+    localStorage.setItem('inventory_products', JSON.stringify(productosIniciales));
+  }
+};
+
+// Agregar a actividad reciente
+const addToRecentActivity = (producto, accion) => {
+  try {
+    const actividades = JSON.parse(localStorage.getItem('recent_activity') || '[]');
+    const nuevaActividad = {
+      id: Date.now(),
+      title: accion === 'editado' ? 'Producto editado' : 'Nuevo producto agregado',
+      description: `${producto.nombre} (${producto.codigo}) - ${producto.categoria}`,
+      time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      color: '#dcfce7',
+      icon: { template: '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' }
+    };
+    
+    actividades.unshift(nuevaActividad);
+    if (actividades.length > 10) actividades.pop();
+    
+    localStorage.setItem('recent_activity', JSON.stringify(actividades));
+    loadRecentActivity();
+  } catch (error) {
+    console.error('Error al agregar actividad reciente:', error);
+  }
+};
+
+// Cargar actividad reciente
+const loadRecentActivity = () => {
+  try {
+    const actividades = JSON.parse(localStorage.getItem('recent_activity') || '[]');
+    recentActivity.value = actividades.slice(0, 10);
+  } catch (error) {
+    console.error('Error al cargar actividad reciente:', error);
+    recentActivity.value = [];
   }
 };
 
 // Inicializar LocalStorage al cargar el componente
 onMounted(() => {
   initializeLocalStorage();
+  loadRecentActivity();
 });
 
 const stats = ref({
