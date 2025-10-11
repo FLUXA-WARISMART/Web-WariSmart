@@ -128,28 +128,43 @@
       </div>
     </div>
 
-    <!-- Additional Sections Grid -->
-    <div class="sections-grid">
-      <!-- Staff Performance -->
-      <div class="section-card">
-        <h3 class="card-title">Desempeño del Personal</h3>
-        <div class="staff-list">
-          <div v-for="staff in staffPerformance" :key="staff.id" class="staff-item">
-            <div class="staff-avatar">{{ staff.initials }}</div>
-            <div class="staff-info">
-              <div class="staff-name">{{ staff.name }}</div>
-              <div class="staff-role">{{ staff.role }}</div>
+    <!-- Bottom Grid -->
+    <div class="bottom-grid">
+      <!-- Demand Predictions -->
+      <div class="section-card predictions-card">
+        <h3 class="card-title">Predicciones de Demanda</h3>
+        <div class="predictions-list">
+          <div v-for="prediction in demandPredictions" :key="prediction.id" class="prediction-item" :class="prediction.trend">
+            <div class="prediction-header">
+              <div class="prediction-name">{{ prediction.name }}</div>
+              <div class="prediction-badge" :class="prediction.trend">
+                {{ prediction.change }}
+              </div>
             </div>
-            <div class="staff-sales">
-              <div class="sales-amount">{{ staff.sales }}</div>
-              <div class="sales-count">{{ staff.count }}</div>
+            <div class="prediction-note">{{ prediction.note }}</div>
+            <div class="prediction-timeline">{{ prediction.timeline }}</div>
+          </div>
+        </div>
+        <div class="prediction-chart">
+          <svg viewBox="0 0 400 150" class="trend-chart">
+            <polyline v-for="(product, i) in demandPredictions" :key="i"
+              :points="product.chartPoints"
+              fill="none"
+              :stroke="product.color"
+              stroke-width="2"
+            />
+          </svg>
+          <div class="chart-legend">
+            <div v-for="product in demandPredictions" :key="product.id" class="legend-item">
+              <span class="legend-line" :style="{ background: product.color }"></span>
+              <span>{{ product.name }}</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Top Products -->
-      <div class="section-card">
+      <div class="section-card products-card">
         <h3 class="card-title">Productos Más Vendidos</h3>
         <div class="products-list">
           <div v-for="(product, index) in topProducts" :key="product.id" class="product-item">
@@ -159,6 +174,24 @@
               <div class="product-units">{{ product.units }} unidades vendidas</div>
             </div>
             <div class="product-revenue">{{ product.revenue }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff Performance -->
+    <div class="section-card staff-card">
+      <h3 class="card-title">Desempeño del Personal</h3>
+      <div class="staff-list">
+        <div v-for="staff in staffPerformance" :key="staff.id" class="staff-item">
+          <div class="staff-avatar">{{ staff.initials }}</div>
+          <div class="staff-info">
+            <div class="staff-name">{{ staff.name }}</div>
+            <div class="staff-role">{{ staff.role }}</div>
+          </div>
+          <div class="staff-sales">
+            <div class="sales-amount">{{ staff.sales }}</div>
+            <div class="sales-count">{{ staff.count }}</div>
           </div>
         </div>
       </div>
@@ -190,6 +223,39 @@ const topProducts = ref([
   { id: 3, name: 'Producto Especial C', units: 156, revenue: 'S/7,800' },
   { id: 4, name: 'Producto Standard D', units: 134, revenue: 'S/6,700' },
   { id: 5, name: 'Producto Económico E', units: 98, revenue: 'S/4,900' }
+]);
+
+const demandPredictions = ref([
+  {
+    id: 1,
+    name: 'Producto A',
+    note: 'Demanda alta esperada',
+    change: '+35%',
+    trend: 'up',
+    timeline: 'Próximos 7 días',
+    color: '#f59e0b',
+    chartPoints: '20,100 60,80 100,70 140,60 180,50 220,45 260,40 300,35 340,30 380,25'
+  },
+  {
+    id: 2,
+    name: 'Producto B',
+    note: 'Demanda estable',
+    change: '+5%',
+    trend: 'stable',
+    timeline: 'Próximos 7 días',
+    color: '#10b981',
+    chartPoints: '20,90 60,88 100,85 140,83 180,80 220,78 260,75 300,73 340,70 380,68'
+  },
+  {
+    id: 3,
+    name: 'Producto C',
+    note: 'Demanda baja esperada',
+    change: '-20%',
+    trend: 'down',
+    timeline: 'Próximos 7 días',
+    color: '#ef4444',
+    chartPoints: '20,70 60,75 100,80 140,85 180,90 220,95 260,100 300,105 340,110 380,115'
+  }
 ]);
 </script>
 
@@ -430,10 +496,108 @@ const topProducts = ref([
   gap: 24px;
 }
 
-.sections-grid {
+.bottom-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
+  margin-bottom: 24px;
+}
+
+.staff-card {
+  margin-bottom: 24px;
+}
+
+.predictions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.prediction-item {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.prediction-item.up {
+  background: #fffbeb;
+  border-left-color: #f59e0b;
+}
+
+.prediction-item.stable {
+  background: #f0fdf4;
+  border-left-color: #10b981;
+}
+
+.prediction-item.down {
+  background: #fef2f2;
+  border-left-color: #ef4444;
+}
+
+.prediction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.prediction-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.prediction-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.prediction-badge.up {
+  background: #f59e0b;
+  color: white;
+}
+
+.prediction-badge.stable {
+  background: #10b981;
+  color: white;
+}
+
+.prediction-badge.down {
+  background: #ef4444;
+  color: white;
+}
+
+.prediction-note {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.prediction-timeline {
+  font-size: 12px;
+  color: #999;
+}
+
+.prediction-chart {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.trend-chart {
+  width: 100%;
+  height: auto;
+  margin-bottom: 12px;
+}
+
+.legend-line {
+  width: 20px;
+  height: 3px;
+  display: inline-block;
+  border-radius: 2px;
 }
 
 .staff-list,
@@ -517,7 +681,7 @@ const topProducts = ref([
 
 @media (max-width: 1200px) {
   .content-grid,
-  .sections-grid {
+  .bottom-grid {
     grid-template-columns: 1fr;
   }
   
