@@ -50,7 +50,7 @@ const menuItems = ref([
   { id: 'suppliers', label: 'Proveedores', to: '/proveedores' },
   { id: 'reports', label: 'Reportes', to: '/reportes' },
   { id: 'users', label: 'Gestión de usuarios', to: '/usuarios' },
-  { id: 'config', label: 'Configuración', to: '#' }
+  { id: 'config', label: 'Configuración', to: '/configuracion' }
 ]);
 </script>
 
